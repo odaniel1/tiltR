@@ -5,6 +5,5 @@ src/*.cc
 src/*.hpp
 src/*.so
 src/*.dll
-man/*.Rd
 vignettes/*.html
 .DS_Store

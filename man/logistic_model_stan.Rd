@@ -4,7 +4,15 @@
 \alias{logistic_model_stan}
 \title{Bayesian logistic model with Stan}
 \usage{
-logistic_model_stan(N, t, sg, og, fg_ant, fg_sd, days, ...)
+logistic_model_stan(
+  data,
+  pars = c("t", "sg"),
+  og = NULL,
+  fg_ant,
+  fg_sd,
+  days,
+  ...
+)
 }
 \arguments{
 \item{...}{Arguments passed to `rstan::sampling` (e.g. iter, chains).}
