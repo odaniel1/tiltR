@@ -1,0 +1,35 @@
+Package: tiltR
+Title: Fermentation forecast dashboard using the Tilt Hydrometer
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Owen",
+           family = "Daniel",
+           role = c("aut", "cre"),
+           email = "owendnl@gmail.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Provides an R Shiny app to visualise statistics for an ongoing fermentation using the Tilt Hydrometer. The dashboard includes the ability to view forecast fermentation profiles, derived using a logistic model with Bayesian parameter estimation through Stan. 
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Biarch: true
+Depends: 
+    R (>= 3.4.0)
+Imports: 
+    methods,
+    Rcpp (>= 0.12.0),
+    rstan (>= 2.18.1),
+    rstantools (>= 2.0.0),
+    magrittr,
+    shiny,
+    shinythemes,
+    googlesheets4
+LinkingTo: 
+    BH (>= 1.66.0),
+    Rcpp (>= 0.12.0),
+    RcppEigen (>= 0.3.3.3.0),
+    rstan (>= 2.18.1),
+    StanHeaders (>= 2.18.0)
+SystemRequirements: GNU make
+RoxygenNote: 7.1.0
+URL: https://github.com/odaniel1/tiltR
+BugReports: https://github.com/odaniel1/tiltR/issues
