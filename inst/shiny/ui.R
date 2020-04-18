@@ -12,12 +12,10 @@ dashboardPage(
 
       sidebarPanel(width = 3,
 
+                   selectInput(inputId = "url", label = h4("Select Fermentation"), beers),
+
                    p("This app has been developed to..."),
                    div(style = "margin-top:-1.5em",hr()),
-
-                   h4("Step 1: Upload data."),
-
-                   textInput(inputId = "url", label = "Googlesheets URL:", value = ""),
 
                    # Calibration adjustments
                    box(id = "calibrationBox", width = '800px', title = "Calibration",
