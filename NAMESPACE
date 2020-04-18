@@ -2,7 +2,7 @@
 
 export("%>%")
 export(get_tilt_data)
-export(launchShiny)
+export(launch_shiny)
 export(logistic_model_stan)
 export(sg_posterior)
 import(Rcpp)

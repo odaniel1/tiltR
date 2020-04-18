@@ -19,7 +19,7 @@ bootstrapPage(theme = shinythemes::shinytheme("flatly"),
     mainPanel(
       plotOutput(outputId = "sg_plot", height = "300px"),
 
-      plotOutput(outputId = "temp_plot", height = "300px"),
+      plotOutput(outputId = "temp_plot", height = "300px")
     )
   )
 )

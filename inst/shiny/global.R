@@ -1,3 +1,5 @@
 library(ggplot2)
+library(dplyr)
+library(tibble)
 library(googlesheets4)
 library(rstan)

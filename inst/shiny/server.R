@@ -18,7 +18,24 @@ function(input, output) {
 
   # on button click, fit model
   observeEvent( input$run_stan,{
-    app_reactive_vals$sg_post <-  geom_smooth()
+
+    print("preparing data")
+
+    data_stan <- data() %>% mutate(
+      t = (difftime(Timepoint, min(Timepoint)))/(24 * 60*60),
+      t = as.character(t) %>% as.numeric()
+    )
+
+    stan_fit <- logistic_model_stan(
+      data = data_stan, pars = c("t", "SG"), fg_ant = 1.016, fg_sd = 0.0005, days = 10,
+      chains = 2, iter = 2000, cores = 2)
+
+    data_post <- sg_posterior(stan_fit) %>%
+      mutate(
+        Timepoint = min(data()$Timepoint) + (24 * 60^2) *t
+      )
+
+    app_reactive_vals$sg_post <-  geom_line(data = data_post, aes(Timepoint,  sg_post, group = quantile, linetype = range))
   })
 
   # sg plot
