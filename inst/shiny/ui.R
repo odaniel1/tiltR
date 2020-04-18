@@ -1,25 +1,47 @@
 # Example from https://shiny.rstudio.com/gallery/faithful.html
-bootstrapPage(theme = shinythemes::shinytheme("flatly"),
+dashboardPage(
+  dashboardHeader(disable = TRUE),
+  dashboardSidebar(disable = TRUE),
 
-  titlePanel("TiltR"),
+  dashboardBody(
+    bootstrapPage(
+      theme = shinythemes::shinytheme("flatly"),
+      useShinyjs(),
 
-  sidebarLayout(
-    sidebarPanel(
-      textInput(inputId = "url", label = "Googlesheets URL:",
-                value = "https://docs.google.com/spreadsheets/d/1KO_JR32M-2LGv0C39hpWJBHAAGU9wvqXPrXecxLCQC4/edit?ts=5e97754e#gid=734290882"),
+      titlePanel("TiltR"),
 
-      actionButton(inputId = "run_stan", label = "Run Forecast"),
+      sidebarPanel(width = 3,
 
-      numericInput(inputId = "cal_orange", label = "Orange Calibration Offset:", value = 0),
+                   p("This app has been developed to..."),
+                   div(style = "margin-top:-1.5em",hr()),
 
-      numericInput(inputId = "cal_green", label = "Green Calibration Offset:", value = 0),
+                   h4("Step 1: Upload data."),
 
-    ),
+                   textInput(inputId = "url", label = "Googlesheets URL:", value = ""),
 
-    mainPanel(
-      plotOutput(outputId = "sg_plot", height = "300px"),
+                   # Calibration adjustments
+                   box(id = "calibrationBox", width = '800px', title = "Calibration",
+                       collapsible = TRUE, collapsed = TRUE,
+                       numericInput(inputId = "cal_orange", label = "Orange Calibration Offset:", value = 0),
+                       numericInput(inputId = "cal_green", label = "Green Calibration Offset:", value = 0)
+                   ),
 
-      plotOutput(outputId = "temp_plot", height = "300px")
+                   # Forecasting
+                   box(id = "forecastBox", width = '800px', title = "Forecast",
+                       collapsible = TRUE, collapsed = TRUE,
+                       numericInput(inputId = "fg_ant", "Anticipated Final Gravity:", value = 1.016, min = 1),
+                       numericInput(inputId = "forecast_days", "Forecast length (days)", value = 10, min = 1),
+                       actionButton(inputId = "run_stan", label = "Run Forecast")
+                   )
+      ),
+
+      mainPanel(width = 9,
+                tabsetPanel(
+                  tabPanel("Specific Gravity", plotOutput(outputId = "sg_plot", height = "600px") ),
+                  tabPanel("Temperature", plotOutput(outputId = "temp_plot", height = "600px"))
+                )
+      )
     )
   )
 )
+

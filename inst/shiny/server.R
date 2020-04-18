@@ -27,7 +27,7 @@ function(input, output) {
     )
 
     stan_fit <- logistic_model_stan(
-      data = data_stan, pars = c("t", "SG"), fg_ant = 1.016, fg_sd = 0.0005, days = 10,
+      data = data_stan, pars = c("t", "SG"), fg_ant = input$fg_ant, fg_sd = 0.0005, days = input$forecast_days,
       chains = 2, iter = 2000, cores = 2)
 
     data_post <- sg_posterior(stan_fit) %>%
