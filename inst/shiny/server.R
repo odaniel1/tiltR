@@ -1,7 +1,10 @@
 # Example from https://shiny.rstudio.com/gallery/faithful.html
 function(input, output) {
 
-  data<- reactive({
+  app_reactive_vals <- reactiveValues(sg_post = NULL)
+
+  # get / update data
+  data <- reactive({
     data <- get_tilt_data(input$url)
 
     data <- data %>% dplyr::mutate(
@@ -13,16 +16,23 @@ function(input, output) {
     return(data)
   })
 
+  # on button click, fit model
+  observeEvent( input$run_stan,{
+    app_reactive_vals$sg_post <-  geom_smooth()
+  })
+
+  # sg plot
   output$sg_plot <- renderPlot({
     p <- ggplot(data(), aes(Timepoint, SG)) +
       geom_point(color= "grey") +
-      geom_smooth() +
       scale_y_continuous(limits = c(1,1.070)) +
       theme_minimal()
+
+    p <- p + app_reactive_vals$sg_post
     return(p)
   })
 
-
+  # temperature plot
   output$temp_plot <- renderPlot({
     p <- ggplot(data(), aes(Timepoint, Temp)) +
       geom_line() +
