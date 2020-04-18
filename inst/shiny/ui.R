@@ -35,7 +35,13 @@ dashboardPage(
 
       mainPanel(width = 9,
                 tabsetPanel(
-                  tabPanel("Specific Gravity", plotOutput(outputId = "sg_plot", height = "600px") ),
+                  tabPanel("Specific Gravity",
+                           plotOutput(outputId = "sg_plot", height = "600px",
+                                      click = "sg_click",
+                                      brush = brushOpts(id = "sg_brush")),
+                           actionButton("outlier_toggle", "Toggle Outliers"),
+                           actionButton("outlier_reset", "Reset Outliers")
+                           ),
                   tabPanel("Temperature", plotOutput(outputId = "temp_plot", height = "600px"))
                 )
       )
