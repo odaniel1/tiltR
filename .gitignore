@@ -7,3 +7,6 @@ src/*.so
 src/*.dll
 vignettes/*.html
 .DS_Store
+data-raw/tiltURLs.R
+R/sysdata.rda
+R/data/*.rda

@@ -1,6 +1,7 @@
 # Example from https://shiny.rstudio.com/gallery/faithful.html
 function(input, output) {
 
+  # print(input$beerName)
   app_reactive_vals <- reactiveValues(sg_post = NULL)
 
   # get / update data
