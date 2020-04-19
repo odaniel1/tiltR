@@ -40,17 +40,21 @@ function(input, output) {
   # on button click, fit model
   observeEvent( input$run_stan,{
 
+    # remove outliers
     data_stan <- data()[!app_reactive_vals$outlier_rows, ]
 
+    # forecast days + days already elapsed
+    forecast_days <- input$forecast_days + ceiling( max(data()$day) )
+
+    # fit model
     stan_fit <- logistic_model_stan(
-      data = data_stan, pars = c("day", "SG"), fg_ant = input$fg_ant, fg_sd = 0.0005, days = input$forecast_days,
-      chains = 2, iter = 1000, cores = 2)
+      data = data_stan, pars = c("day", "SG"), fg_ant = input$fg_ant, fg_sd = 0.0005, days = forecast_days,
+      chains = 4, iter = 2000, cores = 2)
 
-    data_post <- sg_posterior(stan_fit) %>%
-      mutate(
-        Timepoint = min(data()$Timepoint) + (24 * 60^2) *t
-      )
+    # posterior sg quantiles
+    data_post <- sg_posterior(stan_fit)
 
+    # create posterior interval plot layer
     app_reactive_vals$sg_post <-  geom_line(data = data_post, aes(t,  sg_post, group = quantile, linetype = range))
   })
 
@@ -63,9 +67,8 @@ function(input, output) {
     p <- ggplot() +
       geom_point(data = plot_df, aes(day, SG, color = outlier)) +
       scale_y_continuous(limits = c(1,1.100)) +
+      unit_x_scale() +
       tiltR_theme()
-      # theme_minimal() +
-      # theme(legend.position = "none")
 
     p <- p + app_reactive_vals$sg_post
     return(p)
@@ -73,9 +76,10 @@ function(input, output) {
 
   # temperature plot
   output$temp_plot <- renderPlot({
-    p <- ggplot(data(), aes(Timepoint, Temp)) +
+    p <- ggplot(data(), aes(day, Temp)) +
       geom_line() +
-      theme_minimal()
+      unit_x_scale() +
+      tiltR_theme()
     return(p)
   })
 }
