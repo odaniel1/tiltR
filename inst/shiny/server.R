@@ -40,15 +40,10 @@ function(input, output) {
   # on button click, fit model
   observeEvent( input$run_stan,{
 
-   data_stan <- data() %>% mutate(
-      t = (difftime(Timepoint, min(Timepoint)))/(24 * 60*60),
-      t = as.character(t) %>% as.numeric()
-    )
-
-    data_stan <- data_stan[!app_reactive_vals$outlier_rows, ]
+    data_stan <- data()[!app_reactive_vals$outlier_rows, ]
 
     stan_fit <- logistic_model_stan(
-      data = data_stan, pars = c("t", "SG"), fg_ant = input$fg_ant, fg_sd = 0.0005, days = input$forecast_days,
+      data = data_stan, pars = c("day", "SG"), fg_ant = input$fg_ant, fg_sd = 0.0005, days = input$forecast_days,
       chains = 2, iter = 1000, cores = 2)
 
     data_post <- sg_posterior(stan_fit) %>%
@@ -56,7 +51,7 @@ function(input, output) {
         Timepoint = min(data()$Timepoint) + (24 * 60^2) *t
       )
 
-    app_reactive_vals$sg_post <-  geom_line(data = data_post, aes(Timepoint,  sg_post, group = quantile, linetype = range))
+    app_reactive_vals$sg_post <-  geom_line(data = data_post, aes(t,  sg_post, group = quantile, linetype = range))
   })
 
   # sg plot
@@ -66,7 +61,7 @@ function(input, output) {
     plot_df$outlier <- app_reactive_vals$outlier_rows
 
     p <- ggplot() +
-      geom_point(data = plot_df, aes(Timepoint, SG, color = outlier)) +
+      geom_point(data = plot_df, aes(day, SG, color = outlier)) +
       scale_y_continuous(limits = c(1,1.100)) +
       tiltR_theme()
       # theme_minimal() +
