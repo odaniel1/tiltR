@@ -50,8 +50,10 @@ function(input, output) {
 
     # fit model
     stan_fit <- logistic_model_stan(
-      data = data_stan, pars = c("day", "SG"), fg_ant = input$fg_ant, fg_sd = 0.0005, days = forecast_days,
-      chains = 4, iter = 2000, cores = 2)
+      data = data_stan, pars = c("day", "sg_points"), fg_ant = input$fg_ant, fg_sd = 0.01, days = forecast_days,
+      chains = 4, iter = 1500, cores = 4)
+
+    print(rstan::summary(stan_fit, pars = c("b", "M", "fg","nu", "sigma")))
 
     # posterior sg quantiles
     data_post <- sg_posterior(stan_fit)

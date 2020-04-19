@@ -5,6 +5,7 @@ library(googlesheets4)
 library(rstan)
 library(shinydashboard)
 library(shinyjs)
+library(tiltR)
 
 # Prepare beer name lookup for selectInput
 beers <- data(tiltURLs)

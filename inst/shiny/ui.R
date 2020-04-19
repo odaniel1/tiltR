@@ -20,15 +20,15 @@ dashboardPage(
                    # Calibration adjustments
                    box(id = "calibrationBox", width = '800px', title = "Calibration",
                        collapsible = TRUE, collapsed = TRUE,
-                       numericInput(inputId = "cal_orange", label = "Orange Calibration Offset:", value = 0),
-                       numericInput(inputId = "cal_green", label = "Green Calibration Offset:", value = 0)
+                       numericInput(inputId = "cal_orange", label = "Orange Calibration Offset (gravity points):", value = 0),
+                       numericInput(inputId = "cal_green", label = "Green Calibration Offset (gravity points):", value = 0)
                    ),
 
                    # Forecasting
                    box(id = "forecastBox", width = '800px', title = "Forecast",
                        collapsible = TRUE, collapsed = TRUE,
-                       numericInput(inputId = "fg_ant", "Anticipated Final Gravity:", value = 1.016, min = 1),
-                       numericInput(inputId = "forecast_days", "Forecast length (days)", value = 10, min = 1),
+                       numericInput(inputId = "fg_ant", "Target Final Gravity (points):", value = 16, min = 0),
+                       numericInput(inputId = "forecast_days", "Forecast length (days)", value = 0, min = 0),
                        actionButton(inputId = "run_stan", label = "Run Forecast")
                    )
       ),
