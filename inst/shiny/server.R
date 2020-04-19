@@ -3,6 +3,7 @@ function(input, output) {
 
   # print(input$beerName)
   app_reactive_vals <- reactiveValues(
+    calibration_n = 0,
     outlier_rows = FALSE, # for excluding in stan model
     sg_post = NULL, # posterior SG plot layer
     fg_line = NULL,
@@ -21,6 +22,22 @@ function(input, output) {
     )
 
     return(data)
+  })
+
+  # Add a calibration point
+  observeEvent(input$add, ignoreNULL = FALSE, ignoreInit = TRUE,{
+
+    app_reactive_vals$calibration_n <- app_reactive_vals$calibration_n + 1
+    cal_n <- app_reactive_vals$calibration_n
+
+    insertUI( immediate = TRUE,
+              selector = "#calibrationPoints", where = "beforeEnd",
+
+              splitLayout(cellWidths = c("60%", "40%"),
+                          textInput(paste0("calDT_",cal_n), "Date time:", value = "z"),
+                          numericInput(paste0("calVal_",cal_n), label="SG (points)", value = 0)
+              )
+    )
   })
 
   observeEvent(input$sg_click, {
