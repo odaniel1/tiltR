@@ -11,10 +11,12 @@ function(input, output) {
   data <- reactive({
     data <- get_tilt_data(input$url)
 
+    print(head(data))
+
     data <- data %>% dplyr::mutate(
-      SG = dplyr::case_when(
-        Color == "ORANGE" ~ SG + input$cal_orange,
-        Color == "GREEN"  ~ SG + input$cal_green
+      sg_points = dplyr::case_when(
+        Color == "ORANGE" ~ sg_points + input$cal_orange,
+        Color == "GREEN"  ~ sg_points + input$cal_green
       )
     )
 
@@ -65,9 +67,10 @@ function(input, output) {
     plot_df$outlier <- app_reactive_vals$outlier_rows
 
     p <- ggplot() +
-      geom_point(data = plot_df, aes(day, SG, color = outlier)) +
-      scale_y_continuous(limits = c(1,1.100)) +
+      geom_point(data = plot_df, aes(day, sg_points, color = outlier)) +
       unit_x_scale() +
+      dec_y_scale() +
+      labs(x = "Fermentation Time (days)", y = "SG (points)") +
       tiltR_theme()
 
     p <- p + app_reactive_vals$sg_post
@@ -79,6 +82,7 @@ function(input, output) {
     p <- ggplot(data(), aes(day, Temp)) +
       geom_line() +
       unit_x_scale() +
+      labs(x = "Fermentation Time (days)", y = "Temp (C)") +
       tiltR_theme()
     return(p)
   })
