@@ -335,7 +335,7 @@ public:
             current_statement_begin__ = 37;
             lp_accum__.add(exponential_log<propto__>(nu, 1));
             current_statement_begin__ = 38;
-            lp_accum__.add(normal_log<propto__>(sigma, 0, 0.0005));
+            lp_accum__.add(normal_log<propto__>(sigma, 1, 0.05));
             current_statement_begin__ = 41;
             lp_accum__.add(normal_log<propto__>(sg, f, sigma));
         } catch (const std::exception& e) {

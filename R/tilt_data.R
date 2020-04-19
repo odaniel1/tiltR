@@ -9,8 +9,10 @@ get_tilt_data <- function(url){
   # remove temperature scale (F or C).
   df <- df %>% dplyr::rename_all(~stringr::str_remove_all(., " (.*)"))
 
-  # calculate days; difftime returns seconds, convert to days.
   df <- df %>% dplyr::mutate(
+    sg_points = (SG - 1) * 1000,
+
+    # calculate days; difftime returns seconds, convert to days.
     day = difftime(Timepoint, min(Timepoint)) / (24 * 60^2),
     day = as.character(day) %>% as.numeric()
   )
