@@ -3,6 +3,8 @@ library(dplyr)
 library(tibble)
 library(googlesheets4)
 library(rstan)
+library(shinydashboard)
+library(shinyjs)
 
 # Prepare beer name lookup for selectInput
 beers <- data(tiltURLs)
@@ -12,7 +14,7 @@ beers <- purrr::map(beers, ~setNames(.$url, .$name))
 
 # set color palette
 scale_colour_discrete <- function(...) {
-  scale_colour_manual(..., values = c("grey", "hotpink"))
+  scale_colour_manual(..., values = wesanderson::wes_palette("Royal1")[1:2])
 }
 
 # tiltR plot theme
