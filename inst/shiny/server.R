@@ -4,14 +4,14 @@ function(input, output) {
   # print(input$beerName)
   app_reactive_vals <- reactiveValues(
     outlier_rows = FALSE, # for excluding in stan model
-    sg_post = NULL # posterior SG plot layer
+    sg_post = NULL, # posterior SG plot layer
+    fg_line = NULL,
+    fg_annotate = NULL
     )
 
   # get / update data
   data <- reactive({
     data <- get_tilt_data(input$url)
-
-    print(head(data))
 
     data <- data %>% dplyr::mutate(
       sg_points = dplyr::case_when(
@@ -45,6 +45,14 @@ function(input, output) {
     # remove outliers
     data_stan <- data()[!app_reactive_vals$outlier_rows, ]
 
+    data_stan <- data_stan %>%
+      mutate(
+        hr = floor( day * 24 )
+      ) %>%
+      group_by(hr) %>%
+      slice(1) %>%
+      ungroup()
+
     # forecast days + days already elapsed
     forecast_days <- input$forecast_days + ceiling( max(data()$day) )
 
@@ -60,6 +68,11 @@ function(input, output) {
 
     # create posterior interval plot layer
     app_reactive_vals$sg_post <-  geom_line(data = data_post, aes(t,  sg_post, group = quantile, linetype = range))
+
+    # create target fg layer
+    ann_label <- glue::glue("Target final gravity points: {input$fg_ant}")
+    app_reactive_vals$fg_line <- geom_hline(yintercept = input$fg_ant,  color = "darkgrey")
+    app_reactive_vals$fg_annotate <- annotate("text", x = 0.5, y = input$fg_ant +1, label =ann_label, size = 5.5)
   })
 
   # sg plot
@@ -76,6 +89,7 @@ function(input, output) {
       tiltR_theme()
 
     p <- p + app_reactive_vals$sg_post
+    p <- p + app_reactive_vals$fg_line + app_reactive_vals$fg_annotate
     return(p)
   })
 

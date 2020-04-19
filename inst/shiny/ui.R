@@ -30,7 +30,9 @@ dashboardPage(
                        numericInput(inputId = "fg_ant", "Target Final Gravity (points):", value = 16, min = 0),
                        numericInput(inputId = "forecast_days", "Forecast length (days)", value = 0, min = 0),
                        actionButton(inputId = "run_stan", label = "Run Forecast")
-                   )
+                   ),
+
+                   collapseInput(inputId = "forecast_collapsed", boxId = "forecastBox")
       ),
 
       mainPanel(width = 9,

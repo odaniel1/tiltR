@@ -39,3 +39,17 @@ tiltR_theme <- function(){
     legend.pos = "none"
     )
 }
+
+#
+collapseInput <- function(inputId, boxId) {
+  tags$script(
+    sprintf(
+      "$('#%s').closest('.box').on('hidden.bs.collapse', function () {Shiny.onInputChange('%s', true);})",
+      boxId, inputId
+    ),
+    sprintf(
+      "$('#%s').closest('.box').on('shown.bs.collapse', function () {Shiny.onInputChange('%s', false);})",
+      boxId, inputId
+    )
+  )
+}
