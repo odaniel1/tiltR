@@ -21,12 +21,20 @@ dashboardPage(
                    box(id = "calibrationBox", width = '800px', title = "Calibration",
                        collapsible = TRUE, collapsed = TRUE,
 
+                       splitLayout(
+                          numericInput(paste0("calDT_0"), "Day:", value = ""),
+                          numericInput(paste0("calVal_0"), label="SG (points)", value = 0, step = 1)
+                       ),
+
                        # Buttons to add/remove a question
                        div(id = "calibrationPoints"),
-                       actionButton("add", "Add Calibration Point",width = "100%")
+                       splitLayout(
+                       actionButton("addCal", "Add Calibration Point",width = "100%"),
+                       actionButton("applyCal", "Apply",width = "100%")
+                       ),
 
-                       # numericInput(inputId = "cal_orange", label = "Orange Calibration Offset (gravity points):", value = 0),
-                       # numericInput(inputId = "cal_green", label = "Green Calibration Offset (gravity points):", value = 0)
+                       numericInput(inputId = "cal_orange", label = "Orange Calibration Offset (gravity points):", value = 0),
+                       numericInput(inputId = "cal_green", label = "Green Calibration Offset (gravity points):", value = 0)
                    ),
 
                    # Forecasting

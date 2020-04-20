@@ -1,17 +1,21 @@
 # Example from https://shiny.rstudio.com/gallery/faithful.html
-function(input, output) {
+function(input, output,session) {
 
-  # print(input$beerName)
-  app_reactive_vals <- reactiveValues(
+  # ---- SET REACTIVE VALUES ---------------------------------------------------
+
+  react_vals <- reactiveValues(
     calibration_n = 0,
+    calibration_df = NULL,
+    calibration_plot_layer = NULL,
     outlier_rows = FALSE, # for excluding in stan model
     sg_post = NULL, # posterior SG plot layer
     fg_line = NULL,
     fg_annotate = NULL
     )
 
-  # get / update data
-  data <- reactive({
+  # ---- GET DATA --------------------------------------------------------------
+
+  data <- eventReactive(input$url, {
     data <- get_tilt_data(input$url)
 
     data <- data %>% dplyr::mutate(
@@ -21,48 +25,78 @@ function(input, output) {
       )
     )
 
+    data <- data %>% dplyr::arrange(day)
+
     return(data)
   })
 
-  # Add a calibration point
-  observeEvent(input$add, ignoreNULL = FALSE, ignoreInit = TRUE,{
+  # ---- CALIBRATION POINTS ----------------------------------------------------
 
-    app_reactive_vals$calibration_n <- app_reactive_vals$calibration_n + 1
-    cal_n <- app_reactive_vals$calibration_n
+  # Set first calibration point to be sg at day = 0.
+  observe({
+    updateNumericInput(session=session, inputId = "calDT_0",
+                    value= data()$day[1] %>% as.character())
+    updateNumericInput(session=session,inputId = "calVal_0",
+                       value = round(data()$sg_points[1]))
+  })
+
+  # Add calibration points
+  observeEvent(input$addCal, ignoreNULL = FALSE, ignoreInit = TRUE,{
+
+    react_vals$calibration_n <- react_vals$calibration_n + 1
+    cal_n <- react_vals$calibration_n
 
     insertUI( immediate = TRUE,
               selector = "#calibrationPoints", where = "beforeEnd",
 
-              splitLayout(cellWidths = c("60%", "40%"),
-                          textInput(paste0("calDT_",cal_n), "Date time:", value = "z"),
-                          numericInput(paste0("calVal_",cal_n), label="SG (points)", value = 0)
+              splitLayout(
+                  numericInput(paste0("calDT_",cal_n), "Day:", value = data()$day[1]),
+                  numericInput(paste0("calVal_",cal_n), label="SG (points)", value = round(data()$sg_points[1]))
               )
     )
   })
 
+  # Set calibration points
+  observe(
+    react_vals$calibration_df <- tibble::tibble(
+      day = purrr::map(0:react_vals$calibration_n, ~input[[paste0("calDT_",.)]]) %>% unlist,
+      sg_points = purrr::map(0:react_vals$calibration_n, ~input[[paste0("calVal_",.)]]) %>% unlist
+    )
+  )
+
+  observeEvent(input$applyCal,
+    react_vals$calibration_plot_layer <-
+      geom_point(data= react_vals$calibration_df, aes(day,sg_points), color = "black", size = 2)
+  )
+
+  # ---- OUTLIER TOGGLE --------------------------------------------------------
+
   observeEvent(input$sg_click, {
     res <- nearPoints(data(), input$sg_click, allRows = TRUE)
-    app_reactive_vals$outlier_rows <- xor(app_reactive_vals$outlier_rows, res$selected_)
+    react_vals$outlier_rows <- xor(react_vals$outlier_rows, res$selected_)
   })
 
   # Toggle points that are brushed, when button is clicked
   observeEvent(input$outlier_toggle, {
     res <- brushedPoints(data(), input$sg_brush, allRows = TRUE)
-    app_reactive_vals$outlier_rows <- xor(app_reactive_vals$outlier_rows, res$selected_)
+    react_vals$outlier_rows <- xor(react_vals$outlier_rows, res$selected_)
   })
 
   # Reset all points
   observeEvent(input$outlier_reset, {
-    app_reactive_vals$outlier_rows <- FALSE
+    react_vals$outlier_rows <- FALSE
   })
+
+  # ---- STAN MODEL ------------------------------------------------------------
 
   # on button click, fit model
   observeEvent( input$run_stan,{
 
     # remove outliers
-    data_stan <- data()[!app_reactive_vals$outlier_rows, ]
+    data_stan <- data()[!react_vals$outlier_rows, ]
 
     data_stan <- data_stan %>%
+      filter(sg_points > 0) %>%
       mutate(
         hr = floor( day * 24 )
       ) %>%
@@ -84,19 +118,21 @@ function(input, output) {
     data_post <- sg_posterior(stan_fit)
 
     # create posterior interval plot layer
-    app_reactive_vals$sg_post <-  geom_line(data = data_post, aes(t,  sg_post, group = quantile, linetype = range))
+    react_vals$sg_post <-  geom_line(data = data_post, aes(t,  sg_post, group = quantile, linetype = range))
 
     # create target fg layer
     ann_label <- glue::glue("Target final gravity points: {input$fg_ant}")
-    app_reactive_vals$fg_line <- geom_hline(yintercept = input$fg_ant,  color = "darkgrey")
-    app_reactive_vals$fg_annotate <- annotate("text", x = 0.5, y = input$fg_ant +1, label =ann_label, size = 5.5)
+    react_vals$fg_line <- geom_hline(yintercept = input$fg_ant,  color = "darkgrey")
+    react_vals$fg_annotate <- annotate("text", x = 0.5, y = input$fg_ant +1, label =ann_label, size = 5.5)
   })
+
+  # ---- OUTPUT PLOTS ----------------------------------------------------------
 
   # sg plot
   output$sg_plot <- renderPlot({
 
     plot_df <- data()
-    plot_df$outlier <- app_reactive_vals$outlier_rows
+    plot_df$outlier <- react_vals$outlier_rows
 
     p <- ggplot() +
       geom_point(data = plot_df, aes(day, sg_points, color = outlier)) +
@@ -105,8 +141,9 @@ function(input, output) {
       labs(x = "Fermentation Time (days)", y = "SG (points)") +
       tiltR_theme()
 
-    p <- p + app_reactive_vals$sg_post
-    p <- p + app_reactive_vals$fg_line + app_reactive_vals$fg_annotate
+    p <- p + react_vals$sg_post
+    p <- p + react_vals$fg_line + react_vals$fg_annotate
+    p <- p + react_vals$calibration_plot_layer
     return(p)
   })
 
