@@ -2,6 +2,8 @@
 .Rhistory
 src/*.o
 src/*.cc
+src/*.cpp
+src/*.h
 src/*.hpp
 src/*.so
 src/*.dll
