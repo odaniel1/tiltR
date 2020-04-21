@@ -20,3 +20,22 @@ get_tilt_data <- function(url){
   return(df)
 }
 
+
+#' @export
+calibrate_data <- function(df, calibration_day, calibration_points){
+
+nearest_pt <- df %>% dplyr::mutate(
+  abs_day_dist = abs(calibration_day - day),
+  sg_point_dist = calibration_points - sg_points
+) %>% slice(which.min(abs_day_dist))
+
+df <- df %>%
+  mutate(
+    sg_points = case_when(
+      day >= nearest_pt$day ~ sg_points + nearest_pt$sg_point_dist,
+      TRUE ~ sg_points
+    )
+  )
+
+return(df)
+}
