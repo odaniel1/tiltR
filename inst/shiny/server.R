@@ -4,8 +4,9 @@ function(input, output,session) {
   # ---- SET REACTIVE VALUES ---------------------------------------------------
 
   react_vals <- reactiveValues(
+    foo = NULL,
     calibration_n = 0,
-    calibration_df = NULL,
+    calibration_df = tibble(day = numeric(0), sg_points = numeric(0)),
     calibration_plot_layer = NULL,
     outlier_rows = FALSE, # for excluding in stan model
     sg_post = NULL, # posterior SG plot layer
@@ -14,6 +15,24 @@ function(input, output,session) {
     )
 
   # ---- GET DATA --------------------------------------------------------------
+
+  observeEvent(input$url, {
+    print(react_vals$foo)
+    bar <- get_tilt_data(input$url)
+
+    bar <- bar %>% dplyr::mutate(
+      sg_points = dplyr::case_when(
+        Color == "ORANGE" ~ sg_points + input$cal_orange,
+        Color == "GREEN"  ~ sg_points + input$cal_green
+      )
+    ) %>%
+
+      dplyr::arrange(day)
+
+    react_vals$foo <- bar
+    print(react_vals$foo)
+  })
+
 
   data <- eventReactive(input$url, {
     data <- get_tilt_data(input$url)
@@ -64,9 +83,20 @@ function(input, output,session) {
     )
   )
 
-  observeEvent(input$applyCal,
+  observeEvent(input$applyCal,{
+
+    print(head(react_vals$foo))
+    react_vals$foo <- purrr::reduce(
+      .init = react_vals$foo,
+      .x = purrr::transpose(react_vals$calibration_df),
+      .f = function(data,cal){calibrate_data(data, cal$day, cal$sg_points)}
+    )
+
+    print(head(react_vals$foo))
+
     react_vals$calibration_plot_layer <-
       geom_point(data= react_vals$calibration_df, aes(day,sg_points), color = "black", size = 2)
+  }
   )
 
   # ---- OUTLIER TOGGLE --------------------------------------------------------
