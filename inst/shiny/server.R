@@ -88,17 +88,24 @@ function(input, output,session) {
 
   # ---- STAN MODEL ------------------------------------------------------------
 
+  # create target fg layer
+  observeEvent(input$fg_ant,{
+    ann_label <- glue::glue("Target final gravity points: {input$fg_ant}")
+    react_vals$fg_line <- geom_hline(yintercept = input$fg_ant,  color = "darkgrey")
+    react_vals$fg_annotate <- annotate("text", x = 0.1, y = input$fg_ant +1, label =ann_label, size = 5.5, hjust=0)
+  }, ignoreInit=TRUE)
+
   # on button click, fit model
   observeEvent( input$run_stan,{
 
     # remove outliers
     data_stan <- react_vals$brew_df[!react_vals$outlier_rows, ]
 
+    data_stan <- data_stan %>% filter(sg_points > 1)
+
+    # thin to 1 data point per hour.
     data_stan <- data_stan %>%
-      filter(sg_points > 0) %>%
-      mutate(
-        hr = floor( day * 24 )
-      ) %>%
+      mutate(hr = floor( day * 24 )) %>%
       group_by(hr) %>%
       slice(1) %>%
       ungroup()
@@ -108,7 +115,8 @@ function(input, output,session) {
 
     # fit model
     stan_fit <- logistic_model_stan(
-      data = data_stan, pars = c("day", "sg_points"), fg_ant = input$fg_ant, fg_sd = 0.01, days = forecast_days,
+      data = data_stan, cal_data = react_vals$calibration_df,
+      pars = c("day", "sg_points"), fg_ant = input$fg_ant, fg_sd = 0.01, days = forecast_days,
       chains = 4, iter = 1500, cores = 4)
 
     print(rstan::summary(stan_fit, pars = c("b", "M", "fg","nu", "sigma")))
@@ -118,11 +126,6 @@ function(input, output,session) {
 
     # create posterior interval plot layer
     react_vals$sg_post <-  geom_line(data = data_post, aes(t,  sg_post, group = quantile, linetype = range))
-
-    # create target fg layer
-    ann_label <- glue::glue("Target final gravity points: {input$fg_ant}")
-    react_vals$fg_line <- geom_hline(yintercept = input$fg_ant,  color = "darkgrey")
-    react_vals$fg_annotate <- annotate("text", x = 0.5, y = input$fg_ant +1, label =ann_label, size = 5.5)
   })
 
   # ---- OUTPUT PLOTS ----------------------------------------------------------

@@ -6,6 +6,7 @@
 \usage{
 logistic_model_stan(
   data,
+  cal_data,
   pars = c("t", "sg"),
   og = NULL,
   fg_ant,
