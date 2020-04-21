@@ -17,6 +17,8 @@ get_tilt_data <- function(url){
     day = as.character(day) %>% as.numeric()
   )
 
+  df <- df %>% dplyr::arrange(day)
+
   return(df)
 }
 
