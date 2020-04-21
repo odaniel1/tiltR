@@ -4,7 +4,7 @@ function(input, output,session) {
   # ---- SET REACTIVE VALUES ---------------------------------------------------
 
   react_vals <- reactiveValues(
-    foo = NULL,
+    brew_df = NULL,
     calibration_n = 0,
     calibration_df = tibble(day = numeric(0), sg_points = numeric(0)),
     calibration_plot_layer = NULL,
@@ -16,47 +16,18 @@ function(input, output,session) {
 
   # ---- GET DATA --------------------------------------------------------------
 
-  observeEvent(input$url, {
-    print(react_vals$foo)
-    bar <- get_tilt_data(input$url)
-
-    bar <- bar %>% dplyr::mutate(
-      sg_points = dplyr::case_when(
-        Color == "ORANGE" ~ sg_points + input$cal_orange,
-        Color == "GREEN"  ~ sg_points + input$cal_green
-      )
-    ) %>%
-
-      dplyr::arrange(day)
-
-    react_vals$foo <- bar
-    print(react_vals$foo)
-  })
-
-
-  data <- eventReactive(input$url, {
-    data <- get_tilt_data(input$url)
-
-    data <- data %>% dplyr::mutate(
-      sg_points = dplyr::case_when(
-        Color == "ORANGE" ~ sg_points + input$cal_orange,
-        Color == "GREEN"  ~ sg_points + input$cal_green
-      )
-    )
-
-    data <- data %>% dplyr::arrange(day)
-
-    return(data)
-  })
+  observeEvent(input$url,
+    react_vals$brew_df <- get_tilt_data(input$url)
+  )
 
   # ---- CALIBRATION POINTS ----------------------------------------------------
 
   # Set first calibration point to be sg at day = 0.
   observe({
     updateNumericInput(session=session, inputId = "calDT_0",
-                    value= data()$day[1] %>% as.character())
+                    value= react_vals$brew_df$day[1] %>% as.character())
     updateNumericInput(session=session,inputId = "calVal_0",
-                       value = round(data()$sg_points[1]))
+                       value = round(react_vals$brew_df$sg_points[1]))
   })
 
   # Add calibration points
@@ -69,31 +40,29 @@ function(input, output,session) {
               selector = "#calibrationPoints", where = "beforeEnd",
 
               splitLayout(
-                  numericInput(paste0("calDT_",cal_n), "Day:", value = data()$day[1]),
-                  numericInput(paste0("calVal_",cal_n), label="SG (points)", value = round(data()$sg_points[1]))
+                  numericInput(paste0("calDT_",cal_n), "Day:", value = react_vals$brew_df$day[1]),
+                  numericInput(paste0("calVal_",cal_n), label="SG (points)", value = round(react_vals$brew_df$sg_points[1]))
               )
     )
   })
 
-  # Set calibration points
-  observe(
+  # Apply calibration
+  observeEvent(input$applyCal,{
+
+    # define calibration point data frame
     react_vals$calibration_df <- tibble::tibble(
       day = purrr::map(0:react_vals$calibration_n, ~input[[paste0("calDT_",.)]]) %>% unlist,
       sg_points = purrr::map(0:react_vals$calibration_n, ~input[[paste0("calVal_",.)]]) %>% unlist
     )
-  )
 
-  observeEvent(input$applyCal,{
-
-    print(head(react_vals$foo))
-    react_vals$foo <- purrr::reduce(
-      .init = react_vals$foo,
+    # adjust brew_df for calibration
+    react_vals$brew_df <- purrr::reduce(
+      .init = react_vals$brew_df,
       .x = purrr::transpose(react_vals$calibration_df),
       .f = function(data,cal){calibrate_data(data, cal$day, cal$sg_points)}
     )
 
-    print(head(react_vals$foo))
-
+    # create calibration point plot layer
     react_vals$calibration_plot_layer <-
       geom_point(data= react_vals$calibration_df, aes(day,sg_points), color = "black", size = 2)
   }
@@ -102,13 +71,13 @@ function(input, output,session) {
   # ---- OUTLIER TOGGLE --------------------------------------------------------
 
   observeEvent(input$sg_click, {
-    res <- nearPoints(data(), input$sg_click, allRows = TRUE)
+    res <- nearPoints(react_vals$brew_df, input$sg_click, allRows = TRUE)
     react_vals$outlier_rows <- xor(react_vals$outlier_rows, res$selected_)
   })
 
   # Toggle points that are brushed, when button is clicked
   observeEvent(input$outlier_toggle, {
-    res <- brushedPoints(data(), input$sg_brush, allRows = TRUE)
+    res <- brushedPoints(react_vals$brew_df, input$sg_brush, allRows = TRUE)
     react_vals$outlier_rows <- xor(react_vals$outlier_rows, res$selected_)
   })
 
@@ -123,7 +92,7 @@ function(input, output,session) {
   observeEvent( input$run_stan,{
 
     # remove outliers
-    data_stan <- data()[!react_vals$outlier_rows, ]
+    data_stan <- react_vals$brew_df[!react_vals$outlier_rows, ]
 
     data_stan <- data_stan %>%
       filter(sg_points > 0) %>%
@@ -135,7 +104,7 @@ function(input, output,session) {
       ungroup()
 
     # forecast days + days already elapsed
-    forecast_days <- input$forecast_days + ceiling( max(data()$day) )
+    forecast_days <- input$forecast_days + ceiling( max(react_vals$brew_df$day) )
 
     # fit model
     stan_fit <- logistic_model_stan(
@@ -161,7 +130,7 @@ function(input, output,session) {
   # sg plot
   output$sg_plot <- renderPlot({
 
-    plot_df <- data()
+    plot_df <- react_vals$brew_df
     plot_df$outlier <- react_vals$outlier_rows
 
     p <- ggplot() +
@@ -179,7 +148,7 @@ function(input, output,session) {
 
   # temperature plot
   output$temp_plot <- renderPlot({
-    p <- ggplot(data(), aes(day, Temp)) +
+    p <- ggplot(react_vals$brew_df, aes(day, Temp)) +
       geom_line() +
       unit_x_scale() +
       labs(x = "Fermentation Time (days)", y = "Temp (C)") +

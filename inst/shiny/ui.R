@@ -31,10 +31,7 @@ dashboardPage(
                        splitLayout(
                        actionButton("addCal", "Add Calibration Point",width = "100%"),
                        actionButton("applyCal", "Apply",width = "100%")
-                       ),
-
-                       numericInput(inputId = "cal_orange", label = "Orange Calibration Offset (gravity points):", value = 0),
-                       numericInput(inputId = "cal_green", label = "Green Calibration Offset (gravity points):", value = 0)
+                       )
                    ),
 
                    # Forecasting
