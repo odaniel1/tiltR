@@ -6,7 +6,7 @@ sg_posterior <- function(stan_fit, probs = c(0.1,0.5, 0.9)){
   post_df <- rstan::summary(stan_fit, pars = "sg_fit", probs = probs)$summary
 
   post_df <- tibble::as_tibble(post_df, rownames = "variable") %>%
-    dplyr::select_at(dplyr::vars(variable, contains("%")))
+    dplyr::select_at(dplyr::vars(variable, dplyr::contains("%")))
 
   post_df <- post_df %>%
     dplyr::mutate(
